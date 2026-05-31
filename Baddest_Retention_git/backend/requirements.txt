@@ -1,0 +1,9 @@
+flask
+flask-cors
+PyPDF2
+Pillow
+chardet
+anthropic
+openai
+python-docx
+pymupdf

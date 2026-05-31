@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Baddest Retention 最野留存</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+    }
+
+    /* ===== 整体布局：左右分栏 ===== */
+    .app-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ===== 左侧边栏：文件目录 ===== */
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: #ffffff;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sidebar-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar-title .icon {
+      font-size: 20px;
+    }
+
+    .file-count {
+      font-size: 12px;
+      color: #999;
+      font-weight: 400;
+      margin-left: auto;
+      background: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* 搜索框 */
+    .search-box {
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 8px 12px 8px 32px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fafafa;
+    }
+
+    .search-box input:focus {
+      border-color: #FF6B9D;
+      background: #fff;
+    }
+
+    .search-box .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: #bbb;
+    }
+
+    /* 新建按钮 */
+    .new-file-btn {
+      width: 100%;
+      padding: 9px 12px;
+      background: linear-gradient(135deg, #FF6B9D, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .new-file-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 107, 157, 0.35);
+    }
+
+    .new-file-btn:active {
+      transform: translateY(0);
+    }
+
+    /* 文件列表 */
+    .file-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .file-list::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .file-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .file-list::-webkit-scrollbar-thumb {
+      background: #ddd;
+      border-radius: 3px;
+    }
+
+    .file-item {
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-bottom: 4px;
+      border: 1px solid transparent;
+    }
+
+    .file-item:hover {
+      background: #f8f0f5;
+    }
+
+    .file-item.active {
+      background: #fff0f5;
+      border-color: #FF6B9D;
+    }
+
+    .file-item.highlight {
+      animation: highlight-pulse 1.5s ease-out;
+    }
+
+    @keyframes highlight-pulse {
+      0% { background: #ffe0ec; box-shadow: 0 0 0 2px #FF6B9D; }
+      100% { background: #fff0f5; box-shadow: none; }
+    }
+
+    .file-item-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .file-item-tags {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      background: #f0e6f0;
+      color: #764ba2;
+      padding: 1px 7px;
+      border-radius: 8px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .file-item-date {
+      font-size: 11px;
+      color: #bbb;
+    }
+
+    .file-item-source {
+      font-size: 11px;
+      color: #aaa;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    /* 空状态 */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      color: #ccc;
+      text-align: center;
+    }
+
+    .empty-state .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state .empty-text {
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* ===== 右侧编辑区 ===== */
+    .editor-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      min-width: 0;
+    }
+
+    /* 编辑器顶部工具栏 */
+    .editor-toolbar {
+      padding: 12px 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fafafa;
+      min-height: 52px;
+    }
+
+    .editor-filename {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .editor-filename .source-badge {
+      font-size: 11px;
+      font-weight: 400;
+      color: #999;
+      background: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-left: 8px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .toolbar-btn {
+      padding: 6px 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+      background: white;
+      color: #555;
+    }
+
+    .toolbar-btn:hover {
+      border-color: #ccc;
+      background: #f9f9f9;
+    }
+
+    .toolbar-btn.primary {
+      background: linear-gradient(135deg, #FF6B9D, #764ba2);
+      color: white;
+      border: none;
+    }
+
+    .toolbar-btn.primary:hover {
+      box-shadow: 0 2px 8px rgba(255, 107, 157, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .toolbar-btn.primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .toolbar-btn.danger {
+      color: #e74c3c;
+      border-color: #f5c6cb;
+    }
+
+    .toolbar-btn.danger:hover {
+      background: #fff5f5;
+      border-color: #e74c3c;
+    }
+
+    /* 编辑区域 */
+    .editor-content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .editor-textarea {
+      flex: 1;
+      padding: 20px 24px;
+      border: none;
+      outline: none;
+      font-family: 'Consolas', 'Monaco', 'Source Code Pro', 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #333;
+      resize: none;
+      background: #ffffff;
+      tab-size: 2;
+    }
+
+    .editor-textarea::placeholder {
+      color: #ccc;
+    }
+
+    /* 预览区域 */
+    .editor-preview {
+      flex: 1;
+      padding: 20px 24px;
+      overflow-y: auto;
+      display: none;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #333;
+    }
+
+    .editor-preview.active {
+      display: block;
+    }
+
+    .editor-textarea.hidden {
+      display: none;
+    }
+
+    /* Markdown 预览样式 */
+    .editor-preview h1, .editor-preview h2, .editor-preview h3,
+    .editor-preview h4, .editor-preview h5, .editor-preview h6 {
+      margin: 16px 0 8px;
+      font-weight: 600;
+      color: #222;
+    }
+
+    .editor-preview h1 { font-size: 22px; border-bottom: 2px solid #eee; padding-bottom: 6px; }
+    .editor-preview h2 { font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+    .editor-preview h3 { font-size: 16px; }
+
+    .editor-preview p {
+      margin: 8px 0;
+    }
+
+    .editor-preview code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 13px;
+      color: #e83e8c;
+    }
+
+    .editor-preview pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+
+    .editor-preview pre code {
+      background: none;
+      color: inherit;
+      padding: 0;
+    }
+
+    .editor-preview ul, .editor-preview ol {
+      padding-left: 24px;
+      margin: 8px 0;
+    }
+
+    .editor-preview blockquote {
+      border-left: 4px solid #FF6B9D;
+      padding: 8px 16px;
+      margin: 12px 0;
+      background: #fff5f8;
+      color: #555;
+    }
+
+    .editor-preview a {
+      color: #FF6B9D;
+      text-decoration: none;
+    }
+
+    .editor-preview a:hover {
+      text-decoration: underline;
+    }
+
+    .editor-preview hr {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 16px 0;
+    }
+
+    .editor-preview table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 12px 0;
+    }
+
+    .editor-preview th, .editor-preview td {
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    .editor-preview th {
+      background: #f5f5f5;
+      font-weight: 600;
+    }
+
+    /* 无文件选中时的占位 */
+    .editor-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #ccc;
+    }
+
+    .editor-placeholder .placeholder-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .editor-placeholder .placeholder-text {
+      font-size: 15px;
+    }
+
+    .editor-placeholder .placeholder-hint {
+      font-size: 13px;
+      color: #ddd;
+      margin-top: 8px;
+    }
+
+    /* 修改状态指示 */
+    .modified-indicator {
+      font-size: 12px;
+      color: #e67e22;
+      display: none;
+    }
+
+    .modified-indicator.visible {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ===== 新建文件弹窗 ===== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      width: 400px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal h3 {
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: #333;
+    }
+
+    .modal-field {
+      margin-bottom: 12px;
+    }
+
+    .modal-field label {
+      display: block;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .modal-field input,
+    .modal-field textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .modal-field input:focus,
+    .modal-field textarea:focus {
+      border-color: #FF6B9D;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .modal-actions button {
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      border: 1px solid #e0e0e0;
+      background: white;
+      color: #555;
+    }
+
+    .modal-actions .confirm-btn {
+      background: linear-gradient(135deg, #FF6B9D, #764ba2);
+      color: white;
+      border: none;
+    }
+
+    .modal-actions .confirm-btn:hover {
+      box-shadow: 0 2px 8px rgba(255, 107, 157, 0.35);
+    }
+
+    /* ===== Toast 通知 ===== */
+    .toast-container {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      animation: toast-in 0.3s ease-out;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.success { background: #27ae60; }
+    .toast.error { background: #e74c3c; }
+    .toast.info { background: #3498db; }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* 加载状态 */
+    .loading-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #f0f0f0;
+      border-top: 2px solid #FF6B9D;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* 切换视图按钮 */
+    .view-toggle {
+      display: flex;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .view-toggle button {
+      padding: 5px 12px;
+      border: none;
+      background: white;
+      font-size: 12px;
+      cursor: pointer;
+      color: #888;
+      transition: all 0.15s;
+    }
+
+    .view-toggle button.active {
+      background: #FF6B9D;
+      color: white;
+    }
+
+    .view-toggle button:hover:not(.active) {
+      background: #f5f5f5;
+    }
+
+    /* 右键菜单 */
+    .context-menu {
+      position: fixed;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      padding: 6px 0;
+      z-index: 3000;
+      min-width: 160px;
+      display: none;
+    }
+
+    .context-menu.active {
+      display: block;
+    }
+
+    .context-menu-item {
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .context-menu-item:hover {
+      background: #f8f0f5;
+      color: #764ba2;
+    }
+
+    .context-menu-item.danger {
+      color: #e74c3c;
+    }
+
+    .context-menu-item.danger:hover {
+      background: #fff5f5;
+    }
+
+    /* 编辑文件名（内联） */
+    .editor-filename-input {
+      border: 1px solid #FF6B9D;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 15px;
+      font-weight: 600;
+      outline: none;
+      background: #fff5f8;
+      min-width: 200px;
+    }
+
+    /* 编辑弹窗（复用新建弹窗样式） */
+    .modal-overlay.edit-modal .modal h3 {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 左侧：文件目录 -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">
+          <span class="icon">📚</span>
+          知识库
+          <span class="file-count" id="fileCount">0 个文件</span>
+        </div>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="搜索文件...">
+        </div>
+        <button class="new-file-btn" id="newFileBtn">
+          <span>＋</span> 新建文件
+        </button>
+        <button class="new-file-btn" id="llmSettingsBtn" style="background: linear-gradient(135deg, #667eea, #764ba2); margin-top: 6px;">
+          <span>⚙️</span> LLM 配置
+        </button>
+      </div>
+      <div class="file-list" id="fileList">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">📭</div>
+          <div class="empty-text">还没有知识文件<br>拖拽文件到桌宠或点击上方按钮创建</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧：编辑区 -->
+    <div class="editor-panel">
+      <!-- 占位（未选中文件时） -->
+      <div class="editor-placeholder" id="editorPlaceholder">
+        <div class="placeholder-icon">📖</div>
+        <div class="placeholder-text">从左侧选择一个文件开始编辑</div>
+        <div class="placeholder-hint">支持 Markdown 格式</div>
+      </div>
+
+      <!-- 工具栏（选中文件后显示） -->
+      <div class="editor-toolbar" id="editorToolbar" style="display: none;">
+        <div class="editor-filename" id="editorFilename">
+          文件名
+          <span class="source-badge" id="sourceBadge"></span>
+        </div>
+        <span class="modified-indicator" id="modifiedIndicator">● 已修改</span>
+        <div class="toolbar-actions">
+          <div class="view-toggle">
+            <button class="active" id="editViewBtn" title="编辑">编辑</button>
+            <button id="previewViewBtn" title="预览">预览</button>
+          </div>
+          <button class="toolbar-btn primary" id="saveBtn" disabled>
+            💾 保存
+          </button>
+          <button class="toolbar-btn danger" id="deleteBtn">
+            🗑 删除
+          </button>
+        </div>
+      </div>
+
+      <!-- 编辑内容 -->
+      <div class="editor-content" id="editorContent" style="display: none;">
+        <textarea class="editor-textarea" id="editorTextarea" placeholder="在这里编辑 Markdown 内容..."></textarea>
+        <div class="editor-preview" id="editorPreview"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新建文件弹窗 -->
+  <div class="modal-overlay" id="newFileModal">
+    <div class="modal">
+      <h3>📄 新建知识文件</h3>
+      <div class="modal-field">
+        <label>文件标题</label>
+        <input type="text" id="newFileTitle" placeholder="输入文件标题...">
+      </div>
+      <div class="modal-field">
+        <label>标签（逗号分隔）</label>
+        <input type="text" id="newFileTags" placeholder="例如：学习, 笔记">
+      </div>
+      <div class="modal-field">
+        <label>初始内容（可选）</label>
+        <textarea id="newFileContent" rows="4" placeholder="输入初始内容..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button id="cancelNewFile">取消</button>
+        <button class="confirm-btn" id="confirmNewFile">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 容器 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- 右键菜单 -->
+  <div class="context-menu" id="contextMenu">
+    <div class="context-menu-item" id="ctxEdit">✏️ 编辑标题和标签</div>
+    <div class="context-menu-item" id="ctxOpen">📂 打开文件</div>
+    <div class="context-menu-item danger" id="ctxDelete">🗑 删除文件</div>
+  </div>
+
+  <!-- 编辑文件元数据弹窗（复用新建弹窗样式） -->
+  <div class="modal-overlay edit-modal" id="editFileModal">
+    <div class="modal">
+      <h3>✏️ 编辑文件信息</h3>
+      <div class="modal-field">
+        <label>文件标题</label>
+        <input type="text" id="editFileTitle" placeholder="输入文件标题...">
+      </div>
+      <div class="modal-field">
+        <label>标签（逗号分隔）</label>
+        <input type="text" id="editFileTags" placeholder="例如：学习, 笔记">
+      </div>
+      <div class="modal-actions">
+        <button id="cancelEditFile">取消</button>
+        <button class="confirm-btn" id="confirmEditFile">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LLM 配置弹窗 -->
+  <div class="modal-overlay" id="llmSettingsModal">
+    <div class="modal" style="width: 520px; max-height: 85vh; overflow-y: auto;">
+      <h3>⚙️ LLM 配置</h3>
+      <p style="font-size: 12px; color: #999; margin-bottom: 16px;">
+        配置 AI 大模型以启用知识整理功能。支持同一个厂商或分别配置 Vision-Language（图片理解）和 Text（文本整理）模型。
+      </p>
+
+      <!-- 共享配置 -->
+      <fieldset style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+        <legend style="font-weight: 600; color: #764ba2; padding: 0 6px;">通用配置（共享回退）</legend>
+        <div class="modal-field">
+          <label>API Key</label>
+          <input type="password" id="llmApiKey" placeholder="输入默认的 API Key...">
+        </div>
+        <div class="modal-field">
+          <label>Base URL</label>
+          <input type="text" id="llmBaseUrl" placeholder="https://api.openai.com/v1">
+        </div>
+      </fieldset>
+
+      <!-- VL 配置 -->
+      <fieldset style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+        <legend style="font-weight: 600; color: #FF6B9D; padding: 0 6px;">VL 图片理解模型</legend>
+        <div class="modal-field">
+          <label>VL Model <span style="color:#999;font-weight:400;">（如 gpt-4o, qwen-vl-max）</span></label>
+          <input type="text" id="llmVlModel" placeholder="gpt-4o">
+        </div>
+        <div class="modal-field">
+          <label>API Key <span style="color:#999;font-weight:400;">（不填则使用通用配置）</span></label>
+          <input type="password" id="llmVlApiKey" placeholder="留空则使用通用 API Key">
+        </div>
+        <div class="modal-field">
+          <label>Base URL <span style="color:#999;font-weight:400;">（不填则使用通用配置）</span></label>
+          <input type="text" id="llmVlBaseUrl" placeholder="留空则使用通用 Base URL">
+        </div>
+      </fieldset>
+
+      <!-- Text 配置 -->
+      <fieldset style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+        <legend style="font-weight: 600; color: #27ae60; padding: 0 6px;">Text 文本整理模型</legend>
+        <div class="modal-field">
+          <label>Text Model <span style="color:#999;font-weight:400;">（如 claude-sonnet-4-6, gpt-4o）</span></label>
+          <input type="text" id="llmTextModel" placeholder="claude-sonnet-4-6">
+        </div>
+        <div class="modal-field">
+          <label>API Key <span style="color:#999;font-weight:400;">（不填则使用通用配置）</span></label>
+          <input type="password" id="llmTextApiKey" placeholder="留空则使用通用 API Key">
+        </div>
+        <div class="modal-field">
+          <label>Base URL <span style="color:#999;font-weight:400;">（不填则使用通用配置）</span></label>
+          <input type="text" id="llmTextBaseUrl" placeholder="留空则使用通用 Base URL">
+        </div>
+      </fieldset>
+
+      <div id="llmStatus" style="font-size: 12px; color: #666; margin-bottom: 12px; padding: 8px; background: #f9f9f9; border-radius: 6px; display: none;"></div>
+
+      <div class="modal-actions">
+        <button id="cancelLlmSettings">取消</button>
+        <button class="confirm-btn" id="confirmLlmSettings">保存配置</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="chat.js"></script>
+</body>
+</html>

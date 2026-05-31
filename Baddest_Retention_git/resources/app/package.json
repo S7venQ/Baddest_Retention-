@@ -1,0 +1,49 @@
+{
+  "name": "baddest_retention",
+  "version": "1.0.0",
+  "description": "Baddest_Retention - 桌面知识宠物",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.baddest_retention.pet",
+    "productName": "Baddest_Retention",
+    "files": [
+      "main.js",
+      "index.html",
+      "chat.html",
+      "renderer.js",
+      "chat.js",
+      "avatar*.png",
+      "icon.png",
+      "icon.ico",
+      "inbox/**"
+    ],
+    "extraResources": [
+      {
+        "from": "../../backend/dist/backend.exe",
+        "to": "backend.exe"
+      }
+    ],
+    "win": {
+      "target": "portable",
+      "icon": "icon.ico"
+    },
+    "portable": {
+      "artifactName": "Baddest_Retention.exe"
+    }
+  },
+  "keywords": [
+    "electron",
+    "baddest_retention"
+  ],
+  "author": "Baddest_Retention Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@electron/asar": "^4.2.0",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  }
+}

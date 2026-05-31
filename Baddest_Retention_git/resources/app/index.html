@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Baddest_Retention 桌宠</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 560px;
+      height: 640px;
+      background: transparent;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding-bottom: 60px;
+    }
+
+    /* 后端连接状态指示 */
+    .status-indicator {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 10px;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 10;
+      font-family: sans-serif;
+    }
+    .status-indicator.ready {
+      opacity: 0;
+    }
+
+    /* 桌宠容器 */
+    .pet {
+      position: relative;
+      width: 174px;
+      height: 190px;
+      cursor: grab;
+    }
+
+    .pet:active {
+      cursor: grabbing;
+    }
+
+    /* 桌宠图片 */
+    .pet img {
+      width: 174px;
+      height: auto;
+      image-rendering: auto;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 0;
+    }
+
+    /* 默认状态 */
+    .pet .avatar-normal {
+      animation: breathe 2s ease-in-out infinite;
+    }
+
+    /* 思考状态：上下晃动 */
+    .pet .avatar-think {
+      animation: think 0.8s ease-in-out infinite;
+    }
+
+    /* 结果状态：弹跳 */
+    .pet .avatar-result {
+      animation: result 0.5s ease-out;
+      filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 30px rgba(76, 175, 80, 0.5));
+    }
+
+    /* 隐藏不激活的状态 */
+    .pet img.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* 拖拽悬停态：放大 + 粉色光晕 */
+    .pet.drag-over img:not(.hidden) {
+      animation: none !important;
+      transform: translateX(-50%) scale(1.15);
+      filter: drop-shadow(0 0 20px rgba(255, 107, 157, 0.8)) drop-shadow(0 0 40px rgba(255, 107, 157, 0.4));
+    }
+
+    /* 拖拽提示气泡（左侧竖向气泡，文字从左到右逐行）*/
+    .drop-hint {
+      position: absolute;
+      top: 50%;
+      left: -44px;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      background: rgba(255, 107, 157, 0.9);
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 8px;
+      border-radius: 14px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      box-shadow: 0 4px 16px rgba(255, 107, 157, 0.3);
+    }
+
+    /* 气泡小尖角 */
+    .drop-hint::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -6px;
+      transform: translateY(-50%);
+      border: 6px solid transparent;
+      border-left-color: rgba(255, 107, 157, 0.9);
+      border-right: none;
+    }
+
+    .pet.drag-over .drop-hint {
+      opacity: 1;
+      transform: translateY(-50%) translateX(4px);
+    }
+
+    /* 关闭按钮（×）*/
+    .close-btn {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 16px;
+      height: 16px;
+      font-size: 12px;
+      line-height: 16px;
+      text-align: center;
+      color: rgba(0, 0, 0, 0.3);
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 50%;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+      -webkit-app-region: no-drag;  /* 关闭按钮不响应拖拽 */
+      opacity: 0;
+    }
+
+    .pet:hover .close-btn {
+      opacity: 1;
+    }
+
+    .close-btn:hover {
+      color: white;
+      background: #e74c3c;
+    }
+
+    /* 呼吸动画：scale 1.0 → 1.05 循环 2s */
+    @keyframes breathe {
+      0%, 100% {
+        transform: translateX(-50%) scale(1.0) translateY(0);
+      }
+      50% {
+        transform: translateX(-50%) scale(1.05) translateY(-4px);
+      }
+    }
+
+    /* 思考动画：上下摇晃 */
+    @keyframes think {
+      0%, 100% {
+        transform: translateX(-50%) rotate(-5deg);
+      }
+      50% {
+        transform: translateX(-50%) rotate(5deg);
+      }
+    }
+
+    /* 结果动画：弹跳 */
+    @keyframes result {
+      0% {
+        transform: translateX(-50%) scale(0.8) translateY(20px);
+        opacity: 0;
+      }
+      50% {
+        transform: translateX(-50%) scale(1.2) translateY(-30px);
+      }
+      100% {
+        transform: translateX(-50%) scale(1.0) translateY(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="status-indicator" id="statusBar">连接后端中...</div>
+  <div class="pet">
+    <img class="avatar-normal" src="avatar.png" alt="桌宠">
+    <img class="avatar-think hidden" src="avatar_think.png" alt="思考中">
+    <img class="avatar-result hidden" src="avatar_result.png" alt="结果">
+    <div class="close-btn" onclick="window.close()">×</div>
+    <div class="drop-hint"><span>丢</span><span>给</span><span>我</span><span>！</span></div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
